@@ -1,6 +1,16 @@
 # LangChain Complete Study Guide
 ### Based on the 4-Part "Mastering LangChain" series by James (dev.to/jamesbmour)
 
+refer : 
+https://dev.to/jamesbmour/mastering-langchain-part-1-introduction-to-langchain-and-its-key-components-4jji
+
+https://dev.to/jamesbmour/part-2-mastering-prompts-and-language-models-with-langchain-2667
+
+https://dev.to/jamesbmour/part-3-building-powerful-chains-and-agents-in-langchain-5g04
+
+https://dev.to/jamesbmour/langchain-part-4-leveraging-memory-and-storage-in-langchain-a-comprehensive-guide-h4m
+
+
 This guide consolidates all four parts of the series into one study resource, with **extra theory, plain-English explanations, and analogies** added alongside the original code examples:
 
 1. Part 1 – Introduction to LangChain and Its Key Components
