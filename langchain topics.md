@@ -1,10 +1,15 @@
 
-                    LangChain
+                   # LangChain v1.x Learning Roadmap
 
-                         |
-        ---------------------------------
-        |               |               |
-      Models          Prompts        Messages
+## LangChain Architecture Overview
+
+```text
+                         LangChain
+
+                              |
+        -----------------------------------------
+        |                  |                    |
+      Models             Prompts             Messages
         |
         |
       Chains
@@ -15,9 +20,9 @@
         |
   -------------------
   |                 |
-RAG              Agents
+ RAG              Agents
   |                 |
-Vector DB       Tools
+Vector DB        Tools
   |
 Embeddings
 
