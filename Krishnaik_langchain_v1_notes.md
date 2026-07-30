@@ -1,6 +1,29 @@
 # LangChain v1 Crash Course — Complete Notes (with actual notebook code)
 
 Notes built directly from your 7 uploaded notebooks, with the real code from each notebook plus a full explanation of every topic and concept.
+refer:
+
+
+https://www.youtube.com/watch?v=rV3HJ4LEZ7k&t=4472s
+
+
+
+Langchain Reference :https://github.com/krishnaik06/Langchain-V1-Crash-Course/blob/main/updatedlangchain/1-langchainintro.ipynb
+
+https://github.com/krishnaik06/Langchain-V1-Crash-Course/blob/main/updatedlangchain/2-modelintegration.ipynb
+
+
+https://github.com/krishnaik06/Langchain-V1-Crash-Course/blob/main/updatedlangchain/3-tools.ipynb
+
+https://github.com/krishnaik06/Langchain-V1-Crash-Course/blob/main/updatedlangchain/4-messages.ipynb
+
+
+https://github.com/krishnaik06/Langchain-V1-Crash-Course/blob/main/updatedlangchain/5-structuredoutput.ipynb
+
+https://github.com/krishnaik06/Langchain-V1-Crash-Course/blob/main/updatedlangchain/6-middleware.ipynb
+
+https://github.com/krishnaik06/Langchain-V1-Crash-Course/blob/main/updatedlangchain/langchain_guardrails_crash_course.ipynb
+
 
 **Notebooks covered:**
 1. `1-langchainintro.ipynb` — Agents
