@@ -4,6 +4,11 @@
 > Techniques for Reasoning in LLMs" (Daily Dose of Data Science), and the
 > LangChain Models/Prompts/Messages notes (raffeemdai repos).
 > All code examples use the **free Euri API** (OpenAI-compatible endpoint).
+>
+> **Note on this version:** the `ask()` convenience wrapper that used to live
+> in `euri_client.py` has been removed. Every example below now calls
+> `client.chat.completions.create(...)` directly, importing the shared
+> `client` and `MODEL` objects instead.
 
 ---
 
@@ -14,11 +19,11 @@ credit card) across models like Gemini, Llama, GPT-family mirrors — through a
 single **OpenAI-compatible** endpoint. That means it works directly with the
 official `openai` Python SDK, or with LangChain's `ChatOpenAI` class.
 
-**Step 1 — Get a free key:** sign up at https://euron.one/euri and copy your API key.
+**Step 1 — Get a free key:** sign up at <https://euron.one/euri> and copy your API key.
 
 **Step 2 — Install packages:**
 
-```bash
+```
 pip install openai langchain langchain-openai python-dotenv
 ```
 
@@ -32,7 +37,7 @@ EURI_MODEL=gemini-2.5-flash
 
 **Step 4 — A tiny helper you'll reuse everywhere:**
 
-```python
+```
 # euri_client.py
 import os
 from dotenv import load_dotenv
@@ -45,19 +50,11 @@ client = OpenAI(
     base_url=os.getenv("EURI_BASE_URL"),   # https://api.euron.one/api/v1/euri
 )
 MODEL = os.getenv("EURI_MODEL", "gemini-2.5-flash")
-
-def ask(messages, temperature=0.7):
-    """messages = list of {'role': 'system'/'user'/'assistant', 'content': '...'}"""
-    resp = client.chat.completions.create(
-        model=MODEL,
-        messages=messages,
-        temperature=temperature,
-    )
-    return resp.choices[0].message.content
 ```
 
-Every example below just imports `ask()` from this file. (A LangChain
-version using `ChatOpenAI` is shown in Section 7.)
+Every example below just imports `client` and `MODEL` from this file and
+calls `client.chat.completions.create(...)` directly. (A LangChain version
+using `ChatOpenAI` is shown in Section 7.)
 
 ---
 
@@ -65,7 +62,7 @@ version using `ChatOpenAI` is shown in Section 7.)
 
 - A **prompt** = the text/instructions you send to an LLM.
 - **Prompt Engineering** = the process of designing and refining prompts so
-  the model produces the output you actually want.
+the model produces the output you actually want.
 
 Think of it like giving instructions to a new employee — vague instructions
 get vague results; clear, structured instructions get reliable results.
@@ -74,17 +71,17 @@ get vague results; clear, structured instructions get reliable results.
 
 ## 2. Prompt Design vs Prompt Engineering (simple distinction)
 
-| | Focus | Example |
-|---|---|---|
-| **Prompt Design** | Clarity & simplicity — just phrase the ask clearly | "What is the capital of France?" |
+|                        | Focus                                                                                       | Example                                                           |
+| ---------------------- | ------------------------------------------------------------------------------------------- | ------------------------------------------------------------------ |
+| **Prompt Design**      | Clarity & simplicity — just phrase the ask clearly                                          | "What is the capital of France?"                                  |
 | **Prompt Engineering** | Sophisticated control — few-shot, chain-of-thought, system role, temperature, output format | "You are an expert nutritionist... respond in a friendly tone..." |
 
 **Same task, two approaches:**
 
 - *Design (simple):* "Give me a business idea for a tech startup."
 - *Engineering (few-shot + reasoning):* "Here are 2 examples of good startup
-  ideas: [...]. Based on these, give me a new idea focused on remote team
-  collaboration."
+ideas: [...]. Based on these, give me a new idea focused on remote team
+collaboration."
 
 Engineering-style prompts generally produce more specific, more controllable
 output — at the cost of being longer to write.
@@ -110,8 +107,8 @@ data from the last 5 years.
 
 **Euri code — sending this as a real prompt:**
 
-```python
-from euri_client import ask
+```
+from euri_client import client, MODEL
 
 messages = [
     {"role": "user", "content": (
@@ -122,7 +119,12 @@ messages = [
     )}
 ]
 
-print(ask(messages))
+resp = client.chat.completions.create(
+    model=MODEL,
+    messages=messages,
+    temperature=0.7,
+)
+print(resp.choices[0].message.content)
 ```
 
 ---
@@ -138,11 +140,17 @@ purely on what it already learned during training.
 
 **Euri code:**
 
-```python
-from euri_client import ask
+```
+from euri_client import client, MODEL
 
 messages = [{"role": "user", "content": "What is the capital of Japan?"}]
-print(ask(messages))
+
+resp = client.chat.completions.create(
+    model=MODEL,
+    messages=messages,
+    temperature=0.7,
+)
+print(resp.choices[0].message.content)
 # -> Tokyo
 ```
 
@@ -163,8 +171,8 @@ Translate this sentence to French: "What is your name?"
 
 **Euri code:**
 
-```python
-from euri_client import ask
+```
+from euri_client import client, MODEL
 
 prompt = """Here are some translations from English to French:
 English: "Good morning." -> French: "Bonjour."
@@ -173,8 +181,12 @@ English: "How are you?" -> French: "Comment ça va?"
 Translate this sentence to French: "What is your name?"
 """
 
-messages = [{"role": "user", "content": prompt}]
-print(ask(messages))
+resp = client.chat.completions.create(
+    model=MODEL,
+    messages=[{"role": "user", "content": prompt}],
+    temperature=0.7,
+)
+print(resp.choices[0].message.content)
 # -> "Quel est ton nom?"
 ```
 
@@ -188,15 +200,20 @@ logical steps — and often improves accuracy on math/logic tasks.
 
 **Euri code:**
 
-```python
-from euri_client import ask
+```
+from euri_client import client, MODEL
 
 messages = [{
     "role": "user",
     "content": "Solve this step by step: What is 12 multiplied by 9?"
 }]
 
-print(ask(messages, temperature=0))  # temperature=0 -> deterministic/precise
+resp = client.chat.completions.create(
+    model=MODEL,
+    messages=messages,
+    temperature=0,   # deterministic/precise
+)
+print(resp.choices[0].message.content)
 # -> Step 1: 12 x 9 means adding 12 nine times...
 # -> Final answer: 108
 ```
@@ -208,8 +225,8 @@ whole conversation — it's sent once, before the actual question.
 
 **Euri code:**
 
-```python
-from euri_client import ask
+```
+from euri_client import client, MODEL
 
 messages = [
     {"role": "system", "content": (
@@ -219,31 +236,39 @@ messages = [
     {"role": "user", "content": "I'm 28 and work a desk job. Any tips?"},
 ]
 
-print(ask(messages))
+resp = client.chat.completions.create(
+    model=MODEL,
+    messages=messages,
+    temperature=0.7,
+)
+print(resp.choices[0].message.content)
 ```
 
 ### 4.5 Temperature Control (Creativity vs Precision)
 
 **Definition:** `temperature` controls randomness.
+
 - **Low (0 – 0.3):** deterministic, focused, best for facts/code/math.
 - **High (0.7 – 1.2):** creative, varied, best for stories/brainstorming.
 
 **Euri code:**
 
-```python
-from euri_client import ask
+```
+from euri_client import client, MODEL
 
-creative_reply = ask(
-    [{"role": "user", "content": "Write a tagline for a coffee shop."}],
+creative_resp = client.chat.completions.create(
+    model=MODEL,
+    messages=[{"role": "user", "content": "Write a tagline for a coffee shop."}],
     temperature=1.2,
 )
-precise_reply = ask(
-    [{"role": "user", "content": "What is 15 * 12?"}],
+precise_resp = client.chat.completions.create(
+    model=MODEL,
+    messages=[{"role": "user", "content": "What is 15 * 12?"}],
     temperature=0.0,
 )
 
-print("Creative:", creative_reply)
-print("Precise :", precise_reply)
+print("Creative:", creative_resp.choices[0].message.content)
+print("Precise :", precise_resp.choices[0].message.content)
 ```
 
 ---
@@ -271,8 +296,8 @@ go with what most of them say.
 
 **Euri code:**
 
-```python
-from euri_client import ask
+```
+from euri_client import client, MODEL
 from collections import Counter
 
 question = "If a train travels 60 km in 45 minutes, what is its speed in km/h?"
@@ -280,7 +305,12 @@ prompt = f"Solve step by step and give a final numeric answer only at the end:\n
 
 answers = []
 for _ in range(5):
-    reply = ask([{"role": "user", "content": prompt}], temperature=0.8)
+    resp = client.chat.completions.create(
+        model=MODEL,
+        messages=[{"role": "user", "content": prompt}],
+        temperature=0.8,
+    )
+    reply = resp.choices[0].message.content
     # crude extraction: take the last line as "the final answer"
     final_line = reply.strip().splitlines()[-1]
     answers.append(final_line)
@@ -303,8 +333,8 @@ following the strongest path (instead of committing to the first idea).
 
 **Simplified Euri code (manual 2-step tree, 2 branches per step):**
 
-```python
-from euri_client import ask
+```
+from euri_client import client, MODEL
 
 problem = "You have 3 boxes weighing 4kg, 7kg, and 9kg. Split them into two groups with the smallest possible weight difference."
 
@@ -312,7 +342,13 @@ problem = "You have 3 boxes weighing 4kg, 7kg, and 9kg. Split them into two grou
 branch_prompt = f"""Problem: {problem}
 Propose 2 different possible groupings (branches) as short bullet points,
 without solving fully yet."""
-branches = ask([{"role": "user", "content": branch_prompt}], temperature=0.9)
+
+branches_resp = client.chat.completions.create(
+    model=MODEL,
+    messages=[{"role": "user", "content": branch_prompt}],
+    temperature=0.9,
+)
+branches = branches_resp.choices[0].message.content
 print("Candidate branches:\n", branches)
 
 # Step 2: ask the model to evaluate and pick the best branch, then solve it
@@ -322,41 +358,52 @@ Here are candidate groupings:
 
 Evaluate each candidate's weight difference, pick the best one, and give
 the final answer with the reasoning."""
-final_answer = ask([{"role": "user", "content": evaluate_prompt}], temperature=0.2)
+
+final_resp = client.chat.completions.create(
+    model=MODEL,
+    messages=[{"role": "user", "content": evaluate_prompt}],
+    temperature=0.2,
+)
+final_answer = final_resp.choices[0].message.content
 print("\nFinal (best path):\n", final_answer)
 ```
 
 ### 5.4 Quick Comparison
 
-| Technique | What varies | What it optimizes for |
-|---|---|---|
-| **Chain of Thought** | Nothing — single reasoning pass | Making one answer more transparent/accurate |
-| **Self-Consistency** | Runs the *same* prompt multiple times | Reliability — majority vote on the final answer |
+| Technique            | What varies                                       | What it optimizes for                                              |
+| --------------------- | -------------------------------------------------- | --------------------------------------------------------------------|
+| **Chain of Thought** | Nothing — single reasoning pass                   | Making one answer more transparent/accurate                        |
+| **Self-Consistency** | Runs the *same* prompt multiple times             | Reliability — majority vote on the final answer                    |
 | **Tree of Thoughts** | Explores *different* reasoning paths at each step | Quality — searches for the best path, not just the most common one |
 
 ---
 
 ## 6. Prompt Templates (Reusable Prompts in Code)
 
-Hardcoding prompts as raw strings gets messy fast. LangChain-style
-**templates** let you define a prompt once with `{placeholders}` and reuse it
+Hardcoding prompts as raw strings gets messy fast. LangChain-style **templates** let you define a prompt once with `{placeholders}` and reuse it
 with different inputs — cleanly, with input validation.
 
 ### 6.1 Plain Python (no library) — a simple template function
 
-```python
-from euri_client import ask
+```
+from euri_client import client, MODEL
 
 def explain_template(topic: str, audience: str) -> str:
     return f"Explain {topic} to a {audience} in 2 sentences."
 
 prompt = explain_template("vector embeddings", "5-year-old")
-print(ask([{"role": "user", "content": prompt}]))
+
+resp = client.chat.completions.create(
+    model=MODEL,
+    messages=[{"role": "user", "content": prompt}],
+    temperature=0.7,
+)
+print(resp.choices[0].message.content)
 ```
 
 ### 6.2 LangChain `PromptTemplate` + Euri
 
-```python
+```
 import os
 from dotenv import load_dotenv
 from langchain_openai import ChatOpenAI
@@ -381,7 +428,7 @@ print(result.content)
 
 ### 6.3 `ChatPromptTemplate` — system + user roles together
 
-```python
+```
 from langchain_core.prompts import ChatPromptTemplate
 
 chat_template = ChatPromptTemplate.from_messages([
@@ -396,7 +443,7 @@ print(response.content)
 
 ### 6.4 Few-Shot Template (built-in pattern)
 
-```python
+```
 from langchain_core.prompts import FewShotPromptTemplate, PromptTemplate
 
 examples = [
@@ -421,7 +468,7 @@ print(llm.invoke(final_prompt).content)   # -> "stingy" (approximately)
 
 ### 6.5 Reusable Prompt Library Pattern (real projects)
 
-```python
+```
 # prompts.py — keep all templates in one place
 from langchain_core.prompts import ChatPromptTemplate
 
@@ -452,12 +499,12 @@ print(translation_chain.invoke({"text": "Good morning!", "language": "Spanish"})
 A real conversation is more than one prompt/response — LangChain represents
 every turn as a typed **Message**:
 
-| Type | Role | Simple meaning |
-|---|---|---|
-| `SystemMessage` | system | Instructions given once, before the chat starts |
-| `HumanMessage` | user | What the human typed |
-| `AIMessage` | assistant | What the model replied |
-| `ToolMessage` | tool | Result of a tool call, sent back to the model |
+| Type            | Role      | Simple meaning                                  |
+| ---------------- | --------- | ------------------------------------------------ |
+| `SystemMessage` | system    | Instructions given once, before the chat starts |
+| `HumanMessage`  | user      | What the human typed                            |
+| `AIMessage`     | assistant | What the model replied                          |
+| `ToolMessage`   | tool      | Result of a tool call, sent back to the model   |
 
 **Why not just plain strings?** Different providers expect conversation
 history in slightly different formats. Message classes are a common,
@@ -465,7 +512,7 @@ provider-agnostic way to write it once.
 
 **Euri code — multi-turn conversation with memory:**
 
-```python
+```
 import os
 from dotenv import load_dotenv
 from langchain_openai import ChatOpenAI
@@ -504,7 +551,7 @@ Think of it like an assembly line: the prompt template fills in your
 question → passes it to the LLM → the model's answer comes out → an optional
 parser cleans the raw text into something usable (e.g. a Python dict).
 
-```python
+```
 from langchain_core.prompts import ChatPromptTemplate
 from langchain_core.output_parsers import StrOutputParser
 
@@ -544,7 +591,7 @@ resolution (4K/8K), lighting, and material (metal, cloth, glass, wood).
 
 ## 10. Quick-Reference Cheat Sheet
 
-```python
+```
 # Setup (once)
 from openai import OpenAI
 client = OpenAI(api_key=EURI_API_KEY, base_url=EURI_BASE_URL)
@@ -567,19 +614,19 @@ client.chat.completions.create(model=MODEL, messages=[
 # Tree of Thoughts -> generate branches, evaluate them, pick the best path
 ```
 
-| Concept | One-line memory hook |
-|---|---|
-| Prompt | The instructions you send to the model |
-| Zero-shot | No examples — just ask |
-| Few-shot | A few examples first, then the real ask |
-| Chain-of-thought | "Think step by step" before the final answer |
-| Self-consistency | Ask N times, trust the majority answer |
-| Tree of Thoughts | Explore multiple reasoning branches, pick the best |
-| System prompt | Sets persona/behavior for the whole chat |
-| Temperature | 0 = precise, 1+ = creative |
-| Prompt Template | Reusable prompt with `{placeholders}` |
-| Message | Role-tagged turn (system/human/ai/tool) in a conversation |
-| Chain (LCEL) | `prompt \| llm \| parser` — assembly line for LLM calls |
+| Concept          | One-line memory hook                                      |
+| ---------------- | ----------------------------------------------------------- |
+| Prompt           | The instructions you send to the model                    |
+| Zero-shot        | No examples — just ask                                    |
+| Few-shot         | A few examples first, then the real ask                   |
+| Chain-of-thought | "Think step by step" before the final answer              |
+| Self-consistency | Ask N times, trust the majority answer                    |
+| Tree of Thoughts | Explore multiple reasoning branches, pick the best        |
+| System prompt    | Sets persona/behavior for the whole chat                  |
+| Temperature      | 0 = precise, 1+ = creative                                 |
+| Prompt Template  | Reusable prompt with `{placeholders}`                      |
+| Message          | Role-tagged turn (system/human/ai/tool) in a conversation  |
+| Chain (LCEL)     | `prompt \| llm \| parser` — assembly line for LLM calls    |
 
 ---
 
@@ -589,4 +636,4 @@ client.chat.completions.create(model=MODEL, messages=[
 - "3 Prompting Techniques for Reasoning in LLMs" — Daily Dose of Data Science (Avi Chawla)
 - LangChain Models/Prompts/Messages notes with Euri examples — raffeemdai/LangChain_LangGraph
 - LangChain Chaining/Prompts/Messages notes — raffeemdai/RAG_BY_ME
-- Euri free API: https://euron.one/euri
+- Euri free API: <https://euron.one/euri>
