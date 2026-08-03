@@ -47,6 +47,24 @@ llm = ChatGoogleGenerativeAI(
 
 > **Simple explanation:** This line "hires" a specific AI model to work for you. `temperature=0` means "give me consistent, no-surprises answers" — like asking someone to always take the safest, most predictable route rather than experimenting.
 
+> **📌 Update if you're using Euri (as in `prompt_engineering_notes_euri.md`):**
+> Euri is a **free, OpenAI-compatible** API — meaning instead of a Google-specific class, you use LangChain's generic `ChatOpenAI` class and simply point it at Euri's URL and key:
+> ```
+> import os
+> from dotenv import load_dotenv
+> from langchain_openai import ChatOpenAI
+>
+> load_dotenv()
+>
+> llm = ChatOpenAI(
+>     model=os.getenv("EURI_MODEL", "gemini-2.5-flash"),
+>     api_key=os.getenv("EURI_API_KEY"),
+>     base_url=os.getenv("EURI_BASE_URL"),   # https://api.euron.one/api/v1/euri
+> )
+> ```
+> **Analogy:** `ChatGoogleGenerativeAI` is like calling **Google's private phone line directly**. `ChatOpenAI` + Euri is like using a **universal phone adapter** — the same standard "OpenAI-style" plug works no matter which provider (Gemini, Llama, GPT-family) is actually answering on the other end, because Euri translates the call for you.
+> Everything downstream (`invoke`, `batch`, `stream`, chains, `|` pipes) works **exactly the same** — only the setup line changes. That's the whole point of Runnables (see Section 5): swap the model, keep the rest of the pipeline untouched.
+
 ### Invoke
 
 ```
@@ -400,6 +418,35 @@ print(chain.invoke({"topic":"LangChain"}))
 ```
 
 > **Walkthrough in plain English:** "Hire" a model → write a script defining its role and what to ask it → connect script → model → text-cleaner into one assembly line → run the whole line once with `"LangChain"` filled into the blank → print the final, cleaned-up answer.
+
+### Same example, using Euri instead of Google Gemini directly
+
+```
+import os
+from dotenv import load_dotenv
+from langchain_openai import ChatOpenAI
+from langchain_core.prompts import ChatPromptTemplate
+from langchain_core.output_parsers import StrOutputParser
+
+load_dotenv()
+
+llm = ChatOpenAI(
+    model=os.getenv("EURI_MODEL", "gemini-2.5-flash"),
+    api_key=os.getenv("EURI_API_KEY"),
+    base_url=os.getenv("EURI_BASE_URL"),
+)
+
+prompt = ChatPromptTemplate.from_messages([
+    ("system","You are an expert trainer."),
+    ("human","Explain {topic}")
+])
+
+chain = prompt | llm | StrOutputParser()
+
+print(chain.invoke({"topic":"LangChain"}))
+```
+
+> **Only two things changed:** the import (`langchain_openai` instead of `langchain_google_genai`) and how the model object is created (`ChatOpenAI(...)` reading Euri's key/URL from `.env` instead of `ChatGoogleGenerativeAI(...)`). The prompt, chain, `|` pipes, and `.invoke()` call are untouched — a nice real-world proof that Runnables really are interchangeable "shipping containers."
 
 ## Summary
 
