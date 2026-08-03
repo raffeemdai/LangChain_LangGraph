@@ -65,6 +65,25 @@ llm = ChatGoogleGenerativeAI(
 > **Analogy:** `ChatGoogleGenerativeAI` is like calling **Google's private phone line directly**. `ChatOpenAI` + Euri is like using a **universal phone adapter** — the same standard "OpenAI-style" plug works no matter which provider (Gemini, Llama, GPT-family) is actually answering on the other end, because Euri translates the call for you.
 > Everything downstream (`invoke`, `batch`, `stream`, chains, `|` pipes) works **exactly the same** — only the setup line changes. That's the whole point of Runnables (see Section 5): swap the model, keep the rest of the pipeline untouched.
 
+> **🔑 The big picture — what actually changes:**
+> LangChain's syntax **does not change** when you switch to Euri (or any provider). The only thing that changes is the **Model Provider** (the LLM initialization line). Everything else — `PromptTemplate`, `ChatPromptTemplate`, `Messages`, `Chains`, `Runnables`, `Output Parsers`, LCEL (`|`), `Tools`, `Agents`, and `RAG` — stays exactly the same, because they're **provider-agnostic abstractions**:
+> ```
+>                 LangChain
+>                      │
+>      ┌───────────────┼────────────────┐
+>      │               │                │
+>  Prompt          Runnable         Output Parser
+>      │               │                │
+>      └───────────────┼────────────────┘
+>                      │
+>                   Chat Model
+>                      │
+>       ┌──────────────┼───────────────┐
+>       │              │               │
+>    OpenAI         Gemini           Euri
+> ```
+> **Analogy:** Think of the top half of that diagram (Prompt, Runnable, Output Parser) as the **assembly line itself** — it never moves. The bottom row (OpenAI / Gemini / Euri) is just **which power source you plug the assembly line into**. Swap the plug, and the whole factory keeps running the exact same way.
+
 ### Invoke
 
 ```
